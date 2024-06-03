@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"io"
 	"log"
+	"math"
 	"net/http"
 )
 
@@ -37,8 +38,9 @@ func SendNotification(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	items := make([]data.Item, 0)
-	itemChannel := make(chan data.Item, maxReturnItems)
-	for i := range maxReturnItems {
+	numItems := int(math.Min(float64(len(identifiers)), maxReturnItems))
+	itemChannel := make(chan data.Item, numItems)
+	for i := range numItems {
 		go addNewItem(identifiers[i], itemChannel)
 	}
 
@@ -51,7 +53,7 @@ func SendNotification(w http.ResponseWriter, _ *http.Request) {
 				items = append(items, item)
 			}
 		default:
-			if len(items) == maxReturnItems {
+			if len(items) == numItems {
 				checkItem = false
 			}
 		}
