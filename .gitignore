@@ -20,3 +20,4 @@ go.work
 go.work.sum
 
 *.html
+/hacker-news-scraper/hacker-news-scraper
