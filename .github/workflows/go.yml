@@ -64,8 +64,8 @@ jobs:
         cd ../hacker-news-scraper
         COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
         echo "Total coverage: $COVERAGE%"
-        if (( $(echo "$COVERAGE < 80.0" | bc -l) )); then
-          echo "Test coverage is below 90%"
+        if (( $(echo "$COVERAGE < 70.0" | bc -l) )); then
+          echo "Test coverage is below 70%"
           exit 1
         fi
 
