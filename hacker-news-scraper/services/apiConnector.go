@@ -1,6 +1,7 @@
 package services
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"github.com/IntelligenzCodeLab/hacker-news-scraper/data"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"slices"
 	"sync"
 )
 
@@ -48,7 +50,6 @@ func (c *APIConnector) GetItems() ([]data.Item, error) {
 		log.Printf("Failed to unmarshal JSON: %v", err)
 	}
 
-	items := make([]data.Item, 0)
 	numItems := int(math.Min(float64(len(identifiers)), float64(c.MaxResults)))
 	itemChannel := make(chan data.Item)
 	waitGroup := sync.WaitGroup{}
@@ -62,21 +63,35 @@ func (c *APIConnector) GetItems() ([]data.Item, error) {
 		close(itemChannel)
 	}()
 
+	longTitleItems := make([]data.Item, 0)
+	shortTitleItems := make([]data.Item, 0)
 	for item := range itemChannel {
-		items = append(items, item)
+		if len(item.Title) < 5 {
+			shortTitleItems = append(shortTitleItems, item)
+		} else {
+			longTitleItems = append(longTitleItems, item)
+		}
 	}
-	if len(items) < numItems {
+
+	slices.SortFunc(longTitleItems, func(a, b data.Item) int {
+		return cmp.Compare(a.Descendants, b.Descendants)
+	})
+
+	slices.SortFunc(shortTitleItems, func(a, b data.Item) int {
+		return cmp.Compare(a.Score, b.Score)
+	})
+
+	if len(longTitleItems)+len(shortTitleItems) < numItems {
 		var itemsErr itemError = "There has been an error getting some item"
-		return items, itemsErr
+		return longTitleItems, itemsErr
 	} else {
-		return items, nil
+		return append(longTitleItems, shortTitleItems...), nil
 	}
 }
 
 func (c *APIConnector) getItemData(identifier data.ItemId, channel chan data.Item, waitGroup *sync.WaitGroup) {
 
 	reqUrl := fmt.Sprintf("%s/%s/%d.json", c.Url, c.ItemDataEndPoint, identifier)
-	fmt.Println(identifier)
 	resp, err := http.Get(reqUrl)
 	if err != nil {
 		log.Printf("Failed to make request: %v", err)

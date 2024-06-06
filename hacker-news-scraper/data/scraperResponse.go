@@ -1,5 +1,10 @@
 package data
 
 type ScraperResponse struct {
-	Title string `json:"title"`
+	Order    int    `json:"order"`
+	Id       string `json:"id"`
+	Title    string `json:"title"`
+	Url      string `json:"url"`
+	Comments int    `json:"comments"`
+	Score    int    `json:"score"`
 }
