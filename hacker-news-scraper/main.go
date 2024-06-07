@@ -11,15 +11,22 @@ import (
 	"strconv"
 )
 
+const hackerNewsName = "Hacker News"
 const hnApiUrl = "https://hacker-news.firebaseio.com/v0"
+const lobstersName = "Lobsters"
+const lobstersWebUrl = "https://lobste.rs/"
 const maxReturnItems = 30
 
-func RetrieveHackerNewsItems(retriever services.Retriever) http.HandlerFunc {
+func BuildItemsRetrieverHandler(sourcesRetrievers map[string]services.Retriever) http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
-
-		items, err := retriever.GetItems()
+		connectors := make([]services.SourceConnectors, 0)
+		for sourceName, retriever := range sourcesRetrievers {
+			connectors = append(connectors, services.SourceConnectors{SourceName: sourceName, Connector: retriever})
+		}
+		aggregator := services.Aggregator{Connectors: connectors}
+		items, err := aggregator.GetItems(maxReturnItems)
 		if err != nil {
-			log.Printf("Failed to get Items: %v\n", err)
+			log.Printf("Failed to get Connector: %v\n", err)
 			http.Error(w, "Error obtaining required data", http.StatusInternalServerError)
 			return
 		}
@@ -49,10 +56,17 @@ func RetrieveHackerNewsItems(retriever services.Retriever) http.HandlerFunc {
 func main() {
 	r := mux.NewRouter()
 
-	var retriever services.Retriever
-	retriever = &services.APIConnector{Url: hnApiUrl, MaxResults: maxReturnItems, ItemsEndPoint: "topstories", ItemDataEndPoint: "item"}
-	hackerRankRetrieveHandler := RetrieveHackerNewsItems(retriever)
+	var hackerNewsRetriever services.Retriever
+	hackerNewsRetriever = &services.APIConnector{Url: hnApiUrl, ItemsEndPoint: "topstories", ItemDataEndPoint: "item"}
+	hackerRankRetrieveHandler := BuildItemsRetrieverHandler(map[string]services.Retriever{hackerNewsName: hackerNewsRetriever})
 	r.HandleFunc("/hacker-news-items", hackerRankRetrieveHandler).Methods("GET")
+
+	lobstersRetriever := &services.WebScrapperConnector{Url: lobstersWebUrl}
+	lobstersWebScrapeRetrieveHandler := BuildItemsRetrieverHandler(map[string]services.Retriever{lobstersName: lobstersRetriever})
+	r.HandleFunc("/lobsters-items", lobstersWebScrapeRetrieveHandler).Methods("GET")
+
+	combinedRetrieverHandler := BuildItemsRetrieverHandler(map[string]services.Retriever{hackerNewsName: hackerNewsRetriever, lobstersName: lobstersRetriever})
+	r.HandleFunc("/combine-sources-items", combinedRetrieverHandler).Methods("GET")
 	http.Handle("/", r)
 
 	log.Println("Starting server on :8080")
