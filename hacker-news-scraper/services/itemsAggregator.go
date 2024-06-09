@@ -2,7 +2,9 @@ package services
 
 import (
 	"cmp"
+	"log"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/IntelligenzCodeLab/hacker-news-scraper/data"
@@ -23,6 +25,11 @@ type SourceFetchResult struct {
 }
 
 func (agg *Aggregator) GetItems(maxItems int) ([]data.Item, error) {
+	connectorsNames := make([]string, len(agg.Connectors))
+	for i, cnn := range agg.Connectors {
+		connectorsNames[i] = cnn.SourceName
+	}
+	log.Printf("Fetching results from sources: %s", strings.Join(connectorsNames, ","))
 	itemsPerSource := maxItems / len(agg.Connectors)
 	aggregatedItems := make([]data.Item, 0)
 	var wg sync.WaitGroup
@@ -70,11 +77,11 @@ func sortByTitleType(items []data.Item) []data.Item {
 	}
 
 	slices.SortFunc(longTitleItems, func(a, b data.Item) int {
-		return cmp.Compare(a.Descendants, b.Descendants)
+		return cmp.Compare(b.Descendants, a.Descendants)
 	})
 
 	slices.SortFunc(shortTitleItems, func(a, b data.Item) int {
-		return cmp.Compare(a.Score, b.Score)
+		return cmp.Compare(b.Score, a.Score)
 	})
 	return append(longTitleItems, shortTitleItems...)
 }
