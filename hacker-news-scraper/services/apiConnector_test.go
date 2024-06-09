@@ -101,7 +101,7 @@ func TestAPIConnector_GetItems(t *testing.T) {
 					}
 				}
 				if !wantItemFound {
-					t.Errorf("GetItems() want item %v not present in %v", got, wantItem)
+					t.Errorf("GetItems() want item %v not present in %v", wantItem, got)
 				}
 				wantItemFound = false
 			}

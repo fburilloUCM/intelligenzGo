@@ -2,8 +2,10 @@ package services
 
 import (
 	"cmp"
-	"github.com/IntelligenzCodeLab/hacker-news-scraper/data"
 	"slices"
+	"sync"
+
+	"github.com/IntelligenzCodeLab/hacker-news-scraper/data"
 )
 
 type SourceConnectors struct {
@@ -15,12 +17,34 @@ type Aggregator struct {
 	Connectors []SourceConnectors
 }
 
+type SourceFetchResult struct {
+	Items []data.Item
+	Error error
+}
+
 func (agg *Aggregator) GetItems(maxItems int) ([]data.Item, error) {
 	itemsPerSource := maxItems / len(agg.Connectors)
 	aggregatedItems := make([]data.Item, 0)
+	var wg sync.WaitGroup
+	channel := make(chan SourceFetchResult)
 	for _, sourceConnector := range agg.Connectors {
 		connector := sourceConnector.Connector
-		items, err := connector.GetItems(itemsPerSource)
+		wg.Add(1)
+		go func() {
+			items, err := connector.GetItems(itemsPerSource)
+			channel <- SourceFetchResult{Items: items, Error: err}
+			wg.Done()
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(channel)
+	}()
+
+	for fetchResponse := range channel {
+		items := fetchResponse.Items
+		err := fetchResponse.Error
 		if err != nil {
 			return nil, err
 		}
