@@ -1,7 +1,6 @@
 package services
 
 import (
-	"cmp"
 	"encoding/json"
 	"fmt"
 	"github.com/IntelligenzCodeLab/hacker-news-scraper/data"
@@ -9,7 +8,6 @@ import (
 	"log"
 	"math"
 	"net/http"
-	"slices"
 	"sync"
 )
 
@@ -17,14 +15,13 @@ type APIConnector struct {
 	Url              string
 	ItemsEndPoint    string
 	ItemDataEndPoint string
-	MaxResults       int
 }
 
 type itemError string
 
 func (s itemError) Error() string { return string(s) }
 
-func (c *APIConnector) GetItems() ([]data.Item, error) {
+func (c *APIConnector) GetItems(maxItems int) ([]data.Item, error) {
 	reqUrl := fmt.Sprintf("%s/%s.json", c.Url, c.ItemsEndPoint)
 	resp, err := http.Get(reqUrl)
 	if err != nil {
@@ -50,7 +47,7 @@ func (c *APIConnector) GetItems() ([]data.Item, error) {
 		log.Printf("Failed to unmarshal JSON: %v", err)
 	}
 
-	numItems := int(math.Min(float64(len(identifiers)), float64(c.MaxResults)))
+	numItems := int(math.Min(float64(len(identifiers)), float64(maxItems)))
 	itemChannel := make(chan data.Item)
 	waitGroup := sync.WaitGroup{}
 	waitGroup.Add(numItems)
@@ -63,29 +60,16 @@ func (c *APIConnector) GetItems() ([]data.Item, error) {
 		close(itemChannel)
 	}()
 
-	longTitleItems := make([]data.Item, 0)
-	shortTitleItems := make([]data.Item, 0)
+	items := make([]data.Item, 0)
 	for item := range itemChannel {
-		if len(item.Title) < 5 {
-			shortTitleItems = append(shortTitleItems, item)
-		} else {
-			longTitleItems = append(longTitleItems, item)
-		}
+		items = append(items, item)
 	}
 
-	slices.SortFunc(longTitleItems, func(a, b data.Item) int {
-		return cmp.Compare(a.Descendants, b.Descendants)
-	})
-
-	slices.SortFunc(shortTitleItems, func(a, b data.Item) int {
-		return cmp.Compare(a.Score, b.Score)
-	})
-
-	if len(longTitleItems)+len(shortTitleItems) < numItems {
+	if len(items) < numItems {
 		var itemsErr itemError = "There has been an error getting some item"
-		return longTitleItems, itemsErr
+		return items, itemsErr
 	} else {
-		return append(longTitleItems, shortTitleItems...), nil
+		return items, nil
 	}
 }
 

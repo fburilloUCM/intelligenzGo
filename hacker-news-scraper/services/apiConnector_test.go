@@ -82,9 +82,8 @@ func TestAPIConnector_GetItems(t *testing.T) {
 				Url:              tt.fields.Url,
 				ItemsEndPoint:    tt.fields.ItemsEndPoint,
 				ItemDataEndPoint: tt.fields.ItemDataEndPoint,
-				MaxResults:       tt.fields.MaxResults,
 			}
-			got, err := c.GetItems()
+			got, err := c.GetItems(tt.fields.MaxResults)
 			if err != nil {
 				switch {
 				case !tt.wantErr:
@@ -102,7 +101,7 @@ func TestAPIConnector_GetItems(t *testing.T) {
 					}
 				}
 				if !wantItemFound {
-					t.Errorf("GetItems() want item %v not present in %v", got, wantItem)
+					t.Errorf("GetItems() want item %v not present in %v", wantItem, got)
 				}
 				wantItemFound = false
 			}

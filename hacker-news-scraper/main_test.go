@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/IntelligenzCodeLab/hacker-news-scraper/data"
+	"github.com/IntelligenzCodeLab/hacker-news-scraper/services"
 	mock_services "github.com/IntelligenzCodeLab/hacker-news-scraper/services/mock"
 	"github.com/golang/mock/gomock"
 	"net/http"
@@ -24,10 +25,10 @@ func TestRetrieveHackerNewsItems(t *testing.T) {
 	}
 
 	// Set up expectations
-	mockFetcher.EXPECT().GetItems().Return(items, nil)
+	mockFetcher.EXPECT().GetItems(maxReturnItems).Return(items, nil)
 
 	// Create the handler with the mock fetcher
-	handler := RetrieveHackerNewsItems(mockFetcher)
+	handler := BuildItemsRetrieverHandler(map[string]services.Retriever{"test": mockFetcher})
 
 	req, err := http.NewRequest("GET", "/ids", nil)
 	if err != nil {

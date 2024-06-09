@@ -35,16 +35,16 @@ func (m *MockRetriever) EXPECT() *MockRetrieverMockRecorder {
 }
 
 // GetItems mocks base method.
-func (m *MockRetriever) GetItems() ([]data.Item, error) {
+func (m *MockRetriever) GetItems(maxItems int) ([]data.Item, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetItems")
+	ret := m.ctrl.Call(m, "GetItems", maxItems)
 	ret0, _ := ret[0].([]data.Item)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetItems indicates an expected call of GetItems.
-func (mr *MockRetrieverMockRecorder) GetItems() *gomock.Call {
+func (mr *MockRetrieverMockRecorder) GetItems(maxItems interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetItems", reflect.TypeOf((*MockRetriever)(nil).GetItems))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetItems", reflect.TypeOf((*MockRetriever)(nil).GetItems), maxItems)
 }
