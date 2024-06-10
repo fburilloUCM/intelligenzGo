@@ -21,3 +21,4 @@ go.work.sum
 
 *.html
 /hacker-news-scraper/hacker-news-scraper
+/hacker-news-scraper/intelligenzGo
