@@ -1,5 +1,8 @@
 # IntelligenzGo - Hacker News Scraper
 
+![CI/CD Pipeline](https://github.com/fburilloUCM/intelligenzGo/actions/workflows/go.yml/badge.svg)
+
+
 IntelligenzGo is a Golang-based web scraper designed to fetch and sort entries from the Hacker News API, as well as other news sources like Lobsters. The project is designed to be modular, adhering to best practices and principles such as SOLID and clean code. This README explains the thought process behind the development, key technical points, blocking points encountered, and how to test the code.
 
 ## Thought Process
@@ -110,14 +113,6 @@ Or to run using make:
 make test
 ```
 
-## Publishing
-
-### Create container image
-
-```sh
-make build-container
-```
-
 ### Test Coverage
 
 To run the tests and generate a coverage report:
@@ -128,6 +123,14 @@ go tool cover -html=coverage.out -o coverage.html
 ```
 
 Coverage report generated in `coverage.html` document
+
+## Publishing
+
+### Create container image
+
+```sh
+make build-container
+```
 
 ## Automation workflows
 
